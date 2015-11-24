@@ -12,6 +12,8 @@
 
 %{
     #include <stdio.h>
+    #include "debug.h"
+    int debug_flag = 0; // FALSE
 %}
 
 %%
@@ -24,7 +26,7 @@
 .               {}
 
  /* When reach EOF, print file statistics */
-<<EOF>>         { printf("[INFO] File parsed, %u lines.\n", yylineno); return 0; }
+<<EOF>>         { if (debug_flag > 0) debug(LEVEL_INFO ,"File parsed, %u lines.", yylineno); return 0; }
 
 %%
 
@@ -33,10 +35,14 @@ int argc;
 char **argv;
 {
     if (argc > 1) {
-        if (! (yyin = fopen(argv[1], "r"))) {
-            perror(argv[1]);
+        if (! (yyin = fopen(argv[argc - 1], "r"))) {
+            perror(argv[argc - 1]);
             return EXIT_FAILURE;
         } else {
+            if (strcmp("-d", argv[1]) == 0) {
+                debug_flag = 1; // TRUE
+            }
+
             yylex();
             fclose(yyin);
             return EXIT_SUCCESS;
