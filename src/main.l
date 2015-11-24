@@ -18,12 +18,20 @@
 
 %%
 
+ /* single character operators */
+"+"     |
+"-"     |
+"*"     |
+"/"     |
+"("     |
+")"     { if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: %c", yytext[0]); }
+
  /* Ignore comments and whitespace. */
-#[^\n]*         {}
-[ \t\r\n]       {}
+#[^\n]*         { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
+[ \t\n]         { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring whitespaces."); }
 
  /* Ignore any other stuff */
-.               {}
+.               { debug(LEVEL_ERROR, "Character not recognized %c", *yytext); }
 
  /* When reach EOF, print file statistics */
 <<EOF>>         { if (debug_flag > 0) debug(LEVEL_INFO ,"File parsed, %u lines.", yylineno); return 0; }

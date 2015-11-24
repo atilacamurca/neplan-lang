@@ -4,11 +4,16 @@
 
 CFLAGS = -g
 BUILD_DIR = build/
+FIXTURES_DIR = fixtures/
 APP_NAME = neplan
-SOURCE_FILES = src/debug.h src/debug.c
+SOURCE_FILES = src/debug.h src/debug.c src/main.h
 
 dist: clean build
 	@echo 'Making target $@ ...'
+
+fixtures: build
+	@echo 'Testing fixtures ...'
+	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}arithmetics-ops.n
 
 build: src/main.l
 	mkdir -p ${BUILD_DIR}
