@@ -13,8 +13,16 @@
 %{
     #include <stdio.h>
     #include "debug.h"
+    #include "main.h"
+    #include "main.tab.h"
+    #include "opcodes.h"
+
     int debug_flag = 0; // FALSE
+    int iteractive_mode = 0; // FALSE
 %}
+
+/* float exponent */
+EXP     ([Ee][-+]?[0-9]+)
 
 %%
 
@@ -23,12 +31,34 @@
 "-"     |
 "*"     |
 "/"     |
+"="     |
 "("     |
-")"     { if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: %c", yytext[0]); }
+")"     {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: %c", yytext[0]);
+    return yytext[0];
+}
+
+ /* Names */
+[a-zA-Z][a-zA-Z0-9]*    {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Reference found: %c", *yytext);
+    yylval._symbol = lookup(yytext);
+    return NAME;
+}
+
+ /* Numbers */
+[0-9]+"."[0-9]*{EXP}?   |
+"."?[0-9]+{EXP}?        {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Number found: %g", atof(yytext));
+    yylval.value = atof(yytext); return NUMBER;
+}
 
  /* Ignore comments and whitespace. */
-#[^\n]*         { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
-[ \t\n]         { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring whitespaces."); }
+"#".*\n        { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
+[ \t]           { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring whitespaces."); }
+
+\\\n            { printf("c> "); } /* ignore line continuation */
+
+"\n"            { return EOL; }
 
  /* Ignore any other stuff */
 .               { debug(LEVEL_ERROR, "Character not recognized %c", *yytext); }
@@ -51,9 +81,16 @@ char **argv;
                 debug_flag = 1; // TRUE
             }
 
-            yylex();
+            yyparse();
             fclose(yyin);
             return EXIT_SUCCESS;
         }
+    } else {
+        /* welcome message */
+        printf("Welcome to neplan-lang. I will be your humble REPL.\n");
+        printf("^C to Exit.\n> ");
+        iteractive_mode = 1;
+        yyparse();
+        return 0;
     }
 }
