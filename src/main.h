@@ -27,7 +27,8 @@ struct symbol *lookup(char*);
  */
 enum bifs {
     B_print = 1,
-    B_get_num
+    B_get_num,
+    B_quit
 };
 
 /**
@@ -37,6 +38,16 @@ struct ast {
     int node_type;
     struct ast *left;
     struct ast *right;
+};
+
+/**
+ * Struct for Built-in Functions
+ */
+struct fncall {
+    /* type F */
+    int node_type;
+    struct ast *left;
+    enum bifs func_type;
 };
 
 struct num_val {
@@ -70,6 +81,16 @@ struct sym_ref {
  * @return
  */
 struct ast *new_ast(int node_type, struct ast *left, struct ast *right);
+
+/**
+ * Create new built-in function
+ * @param  func_type
+ * @param  left
+ * @return
+ */
+struct ast *new_built_in_function(int func_type, struct ast *left);
+
+// struct ast *new_call(struct symbol *_symbol, struct ast *left);
 
 /**
  * Create a new reference and put in the symbols table

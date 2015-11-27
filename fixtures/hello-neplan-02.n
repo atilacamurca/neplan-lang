@@ -1,0 +1,5 @@
+# test for print built-in function
+a = 2 + 3
+print(a)
+b = print(2 * 4 - 1)
+print(b)

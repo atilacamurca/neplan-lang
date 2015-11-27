@@ -1,6 +1,5 @@
 
 #include "debug.h"
-#include <string.h>
 
 void debug(int level, const char *message, ...) {
     switch (level) {
@@ -11,7 +10,7 @@ void debug(int level, const char *message, ...) {
             printf("[DEBUG] ");
             break;
         case LEVEL_ERROR:
-            printf("[ERROR] ");
+            printf("[ERROR] line:%d: ", yylineno);
             break;
         default:
             printf("[UNSET] ");

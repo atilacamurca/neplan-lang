@@ -4,6 +4,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+extern int yylineno;
 
 #define LEVEL_INFO 0
 #define LEVEL_DEBUG 1

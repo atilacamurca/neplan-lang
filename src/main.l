@@ -32,10 +32,21 @@ EXP     ([Ee][-+]?[0-9]+)
 "*"     |
 "/"     |
 "="     |
+","     |
 "("     |
 ")"     {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: %c", yytext[0]);
     return yytext[0];
+}
+
+ /* Built-in Functions */
+"print"         {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: print");
+    yylval.fn = B_print; return FUNC;
+}
+"quit"          {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: quit");
+    yylval.fn = B_quit; return FUNC;
 }
 
  /* Names */
@@ -88,7 +99,7 @@ char **argv;
     } else {
         /* welcome message */
         printf("Welcome to neplan-lang. I will be your humble REPL.\n");
-        printf("^C to Exit.\n> ");
+        printf("^C or quit() to Exit.\n> ");
         iteractive_mode = 1;
         yyparse();
         return 0;

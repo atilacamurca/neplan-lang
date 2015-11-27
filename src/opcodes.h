@@ -17,4 +17,6 @@
 
 #define TYPE_NUMBER     'K'
 #define TYPE_REF        'N'
+#define TYPE_FUNC       'F'
+#define TYPE_STMT_LIST  'L'
 #define TYPE_ASIGN      '='

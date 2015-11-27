@@ -13,19 +13,22 @@
     struct ast *tree;
     double value;
     struct symbol *_symbol; /* which symbol */
+    int fn; /* which function */
 }
 
 /* Declare tokens */
 %token <value> NUMBER
 %token <_symbol> NAME
+%token <fn> FUNC
 %token EOL
 
+%nonassoc <fn> CMP
 %right '='
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
 
-%type <tree> exp stmt
+%type <tree> exp stmt explist
 
 %start start
 
@@ -46,6 +49,12 @@ exp:
     | NUMBER                { $$ = new_number($1); }
     | NAME                  { $$ = new_ref($1); }
     | NAME '=' exp          { $$ = new_asign($1, $3); }
+    | FUNC '(' explist ')'  { $$ = new_built_in_function($1, $3); }
+;
+
+explist: /* empty */        { $$ = NULL; }
+    | exp
+    | exp ',' explist       { $$ = new_ast(TYPE_STMT_LIST, $1, $3); }
 ;
 
 start:      /* empty */

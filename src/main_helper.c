@@ -88,6 +88,22 @@ new_number(double value)
 }
 
 struct ast *
+new_built_in_function(int func_type, struct ast *left)
+{
+    struct fncall *a = malloc(sizeof(struct fncall));
+
+    if (!a) {
+        debug(LEVEL_ERROR, "out of space.");
+        exit(EXIT_FAILURE);
+    }
+
+    a->node_type = TYPE_FUNC;
+    a->left = left;
+    a->func_type = func_type;
+    return (struct ast *) a;
+}
+
+struct ast *
 new_ref(struct symbol *s)
 {
     struct sym_ref *a = malloc(sizeof(struct sym_ref));
@@ -129,6 +145,12 @@ free_tree(struct ast *a)
             free_tree(a->right);
             break;
 
+        /* one subtree */
+        case TYPE_FUNC:
+        case OP_UMINUS:
+            free_tree(a->left);
+            break;
+
         /* no subtree */
         case TYPE_NUMBER:
         case TYPE_REF:
@@ -143,6 +165,11 @@ free_tree(struct ast *a)
 
     free(a); /* free the node itself */
 }
+
+/**
+ * Call a built-in function
+ */
+static double call_built_in_function(struct fncall *);
 
 double
 eval(struct ast *a)
@@ -184,10 +211,42 @@ eval(struct ast *a)
             value = -eval(a->left);
             break;
 
+        /* list of statements */
+        case TYPE_STMT_LIST:
+            eval(a->left);
+            value = eval(a->right);
+            break;
+
+        case TYPE_FUNC:
+            value = call_built_in_function((struct fncall *) a);
+            break;
+
         default:
             debug(LEVEL_ERROR, "Internal error. Bad node %c.", a->node_type);
     }
     return value;
+}
+
+static double
+call_built_in_function(struct fncall *fn)
+{
+    enum bifs func_type = fn->func_type;
+    double value = 0.0;
+    if (fn->left) {
+        value = eval(fn->left);
+    }
+
+    switch (func_type) {
+        case B_print:
+            printf("%4.4g\n", value);
+            return value;
+        case B_quit:
+            printf("See ya!\n");
+            exit(EXIT_SUCCESS);
+        default:
+            debug(LEVEL_ERROR, "Unknown built-in function %d", func_type);
+            return 0.0;
+    }
 }
 
 void
