@@ -138,10 +138,11 @@ free_tree(struct ast *a)
 {
     switch (a->node_type) {
         /* two subtrees */
-        case '+':
-        case '-':
-        case '*':
-        case '/':
+        case OP_ADD:
+        case OP_SUB:
+        case OP_MUL:
+        case OP_DIV:
+        case OP_POW:
             free_tree(a->right);
             break;
 
@@ -209,6 +210,9 @@ eval(struct ast *a)
             break;
         case OP_UMINUS:
             value = -eval(a->left);
+            break;
+        case OP_POW:
+            value = pow(eval(a->left), eval(a->right));
             break;
 
         /* list of statements */

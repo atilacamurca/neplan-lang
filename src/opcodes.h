@@ -7,6 +7,7 @@
 #define OP_MUL          '*'
 #define OP_DIV          '/'
 #define OP_UMINUS       'M'
+#define OP_POW          'P'
 
 #define CMP_GT          6
 #define CMP_LT          7

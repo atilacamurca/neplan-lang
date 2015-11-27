@@ -27,6 +27,7 @@
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
+%right POW
 
 %type <tree> exp stmt explist
 
@@ -44,6 +45,7 @@ exp:
     | exp '-' exp           { $$ = new_ast(OP_SUB, $1, $3); }
     | exp '*' exp           { $$ = new_ast(OP_MUL, $1, $3); }
     | exp '/' exp           { $$ = new_ast(OP_DIV, $1, $3); }
+    | exp POW exp           { $$ = new_ast(OP_POW, $1, $3); }
     | '(' exp ')'           { $$ = $2; }
     | '-' exp %prec UMINUS  { $$ = new_ast(OP_UMINUS, $2, NULL); }
     | NUMBER                { $$ = new_number($1); }
@@ -63,6 +65,11 @@ start:      /* empty */
             printf("= %4.4g\n> ", eval($2));
         }
         free_tree($2);
+    }
+    | start EOL             {
+        if (iteractive_mode > 0) {
+            printf("> ");
+        }
     }
     | start error EOL       {
         yyerrok;

@@ -39,6 +39,11 @@ EXP     ([Ee][-+]?[0-9]+)
     return yytext[0];
 }
 
+"**"            {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: **");
+    return POW;
+}
+
  /* Built-in Functions */
 "print"         {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: print");
@@ -66,8 +71,6 @@ EXP     ([Ee][-+]?[0-9]+)
  /* Ignore comments and whitespace. */
 "#".*\n        { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
 [ \t]           { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring whitespaces."); }
-
-\\\n            { printf("c> "); } /* ignore line continuation */
 
 "\n"            { return EOL; }
 
