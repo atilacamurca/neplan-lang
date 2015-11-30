@@ -13,6 +13,7 @@
     struct ast *tree;
     double value;
     struct symbol *_symbol; /* which symbol */
+    struct symlist *_symlist;
     int fn; /* which function */
 }
 
@@ -29,7 +30,8 @@
 %nonassoc UMINUS
 %right POW
 
-%type <tree> exp stmt explist
+%type <tree> exp stmt explist multiple_assign
+%type <_symlist> symlist
 
 %start start
 
@@ -37,7 +39,8 @@
 
 stmt:
     /* TODO: latter we must have if, else, while */
-    exp
+    multiple_assign
+    | exp
 ;
 
 exp:
@@ -59,8 +62,15 @@ explist: /* empty */        { $$ = NULL; }
     | exp ',' explist       { $$ = new_ast(TYPE_STMT_LIST, $1, $3); }
 ;
 
+symlist: NAME               { $$ = new_symlist($1, NULL); }
+    | NAME ',' symlist      { $$ = new_symlist($1, $3); }
+
+multiple_assign:
+    symlist '=' explist     { $$ = new_multiple_assign($1, $3); }
+;
+
 start:      /* empty */
-    | start stmt EOL /* for now print the result */ {
+    | start stmt EOL {
         if (iteractive_mode > 0) {
             printf("= %4.4g\n> ", eval($2));
         }

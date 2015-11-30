@@ -23,6 +23,36 @@ struct symbol symtab[NHASH];
 struct symbol *lookup(char*);
 
 /**
+ * List of symbols, for an argument list
+ */
+struct symlist {
+    struct symbol *_symbol;
+    struct symlist *next;
+};
+
+/**
+ * Create a new symbol list
+ * @param  _symbol
+ * @param  next
+ * @return
+ */
+struct symlist *new_symlist(struct symbol *_symbol, struct symlist *next);
+
+/**
+ * Clean the symbol list from memory
+ * @param _symlist
+ */
+void free_symlist(struct symlist *_symlist);
+
+/**
+ * Handle multiple assignments
+ * @param  _symlist
+ * @param  right
+ * @return
+ */
+struct ast *new_multiple_assign(struct symlist *_symlist, struct ast *explist);
+
+/**
  * Enum of Built-in Functions
  */
 enum bifs {

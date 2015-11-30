@@ -133,6 +133,32 @@ new_asign(struct symbol *s, struct ast *v)
     return (struct ast *) a;
 }
 
+struct symlist *
+new_symlist(struct symbol *_symbol, struct symlist *next)
+{
+    struct symlist *sl = malloc(sizeof(struct symlist));
+
+    if(!sl) {
+        debug(LEVEL_ERROR, "out of space.");
+        exit(EXIT_FAILURE);
+    }
+    sl->_symbol = _symbol;
+    sl->next = next;
+    return sl;
+}
+
+void
+free_symlist(struct symlist *_symlist)
+{
+    struct symlist *aux;
+
+    while(_symlist) {
+        aux = _symlist->next;
+        free(_symlist);
+        _symlist = aux;
+    }
+}
+
 void
 free_tree(struct ast *a)
 {
@@ -143,6 +169,7 @@ free_tree(struct ast *a)
         case OP_MUL:
         case OP_DIV:
         case OP_POW:
+        case TYPE_STMT_LIST:
             free_tree(a->right);
             break;
 
@@ -242,15 +269,50 @@ call_built_in_function(struct fncall *fn)
 
     switch (func_type) {
         case B_print:
-            printf("%4.4g\n", value);
+            fprintf(stdout, "%4.4g\n", value);
             return value;
         case B_quit:
-            printf("See ya!\n");
+            fprintf(stdout, "See ya!\n");
             exit(EXIT_SUCCESS);
         default:
             debug(LEVEL_ERROR, "Unknown built-in function %d", func_type);
             return 0.0;
     }
+}
+
+struct ast *
+new_multiple_assign(struct symlist *_symlist, struct ast *explist)
+{
+    int num_args_symbol, num_args_expr, index;
+    struct symlist *cloned_args;
+    double *current_values;
+    struct ast *last_value;
+
+    /* store current values for latter reference, like a, b = b, a */
+    current_values = (double *) malloc(num_args_symbol * sizeof(double));
+
+    /* evaluate the arguments */
+    cloned_args = _symlist;
+    for (index = 0; cloned_args; index++) {
+        if (explist->node_type == TYPE_STMT_LIST) {
+            current_values[index] = eval(explist->left);
+            explist = explist->right;
+        } else {
+            // if it's the end of the list
+            // continue to give the last value if
+            // the number of symbols is less than the number of args
+            current_values[index] = eval(explist);
+            last_value = explist;
+        }
+        cloned_args = cloned_args->next;
+    }
+
+    for (index = 0;_symlist; _symlist = _symlist->next, index++) {
+        _symlist->_symbol->value = current_values[index];
+    }
+
+    free(current_values);
+    return last_value;
 }
 
 void

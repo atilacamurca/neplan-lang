@@ -15,6 +15,7 @@ fixtures: dist
 	@echo 'Testing fixtures ...'
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-01.n
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-02.n
+	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-03.n
 
 ${BUILD_DIR}main.tab.c: src/main.y
 	bison -d $< -o $@
