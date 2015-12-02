@@ -69,6 +69,17 @@ multiple_assign:
     symlist '=' explist     { $$ = new_multiple_assign($1, $3); }
 ;
 
+assign_condition:
+    NAME '=' expr (and_condition|or_condition)+     { $$ = new_condition_assign($1, $3); }
+;
+
+or_condition: /* empty */
+    | 'or' expr or_condition
+
+and_condition: /* empty */
+    | 'and' expr and_condition
+;
+
 start:      /* empty */
     | start stmt EOL {
         if (iteractive_mode > 0) {

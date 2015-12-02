@@ -6,3 +6,5 @@ a, b = b, a
 print(a)
 print(b)
 print(c)
+
+c = a or b or 12
