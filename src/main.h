@@ -53,6 +53,15 @@ void free_symlist(struct symlist *_symlist);
 struct ast *new_multiple_assign(struct symlist *_symlist, struct ast *explist);
 
 /**
+ * Handle conditional assignments
+ * @param  _symbol [description]
+ * @param  explist [description]
+ * @return         [description]
+ * TODO
+ */
+struct ast *new_conditional_assign(struct symbol *_symbol, struct ast *explist);
+
+/**
  * Enum of Built-in Functions
  */
 enum bifs {

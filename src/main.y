@@ -30,7 +30,7 @@
 %nonassoc UMINUS
 %right POW
 
-%type <tree> exp stmt explist multiple_assign
+%type <tree> exp stmt explist multiple_assign conditional_assign
 %type <_symlist> symlist
 
 %start start
@@ -39,7 +39,8 @@
 
 stmt:
     /* TODO: latter we must have if, else, while */
-    multiple_assign
+     conditional_assign
+    | multiple_assign
     | exp
 ;
 
@@ -64,20 +65,19 @@ explist: /* empty */        { $$ = NULL; }
 
 symlist: NAME               { $$ = new_symlist($1, NULL); }
     | NAME ',' symlist      { $$ = new_symlist($1, $3); }
+;
 
 multiple_assign:
     symlist '=' explist     { $$ = new_multiple_assign($1, $3); }
 ;
 
-assign_condition:
-    NAME '=' expr (and_condition|or_condition)+     { $$ = new_condition_assign($1, $3); }
+conditional_assign:
+    NAME '=' or_condition_list     { $$ = new_conditional_assign($1, $3); }
 ;
 
-or_condition: /* empty */
-    | 'or' expr or_condition
-
-and_condition: /* empty */
-    | 'and' expr and_condition
+or_condition_list:
+      exp                           { $$ = $1; } // TODO: se der certo fazer o mesmo em explist!
+    | exp 'or' or_condition_list    { $$ = new_ast(TYPE_STMT_LIST, $1, $3); }
 ;
 
 start:      /* empty */
