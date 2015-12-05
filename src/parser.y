@@ -12,6 +12,7 @@
 %union {
     struct ast *tree;
     double value;
+    int bool;
     struct symbol *_symbol; /* which symbol */
     struct symlist *_symlist;
     int fn; /* which function */
@@ -19,15 +20,19 @@
 
 /* Declare tokens */
 %token <value> NUMBER
+%token <bool> BOOL
 %token <_symbol> NAME
 %token <fn> FUNC
 %token EOL
 
 %nonassoc <fn> CMP
 %right '='
+%left OR
+%left AND
+%left NOT
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS
+%nonassoc UMINUS PNOT
 %right POW
 
 %type <tree> exp stmt explist multiple_assign
@@ -55,6 +60,10 @@ exp:
     | NAME                  { $$ = new_ref($1); }
     | NAME '=' exp          { $$ = new_asign($1, $3); }
     | FUNC '(' explist ')'  { $$ = new_built_in_function($1, $3); }
+    | exp AND exp           { $$ = new_ast(OP_AND, $1, $3); }
+    | exp OR exp            { $$ = new_ast(OP_OR, $1, $3); }
+    | NOT exp %prec PNOT    { $$ = new_ast(OP_NOT, $2, NULL); }
+    | BOOL                  { $$ = new_boolean($1); }
 ;
 
 explist: /* empty */        { $$ = NULL; }

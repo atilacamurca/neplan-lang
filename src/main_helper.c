@@ -88,6 +88,20 @@ new_number(double value)
 }
 
 struct ast *
+new_boolean(int value) {
+    struct bool_val *a = malloc(sizeof(struct bool_val));
+
+    if (!a) {
+        debug(LEVEL_ERROR, "out of space.");
+        exit(EXIT_FAILURE);
+    }
+
+    a->node_type = TYPE_BOOL;
+    a->boolean = value;
+    return (struct ast *) a;
+}
+
+struct ast *
 new_built_in_function(int func_type, struct ast *left)
 {
     struct fncall *a = malloc(sizeof(struct fncall));
@@ -170,13 +184,18 @@ free_tree(struct ast *a)
         case OP_DIV:
         case OP_POW:
         case TYPE_STMT_LIST:
+        case OP_AND:
+        case OP_OR:
             free_tree(a->right);
             break;
 
         /* one subtree */
         case TYPE_FUNC:
         case OP_UMINUS:
-            free_tree(a->left);
+        case OP_NOT:
+            if (a->left) {
+                free_tree(a->left);
+            }
             break;
 
         /* no subtree */
@@ -214,6 +233,10 @@ eval(struct ast *a)
             value = ((struct num_val *)a)->number;
             break;
 
+        case TYPE_BOOL:
+            value = (double) ((struct bool_val *)a)->boolean;
+            break;
+
         case TYPE_REF:
             value = ((struct sym_ref *)a)->_symbol->value;
             break;
@@ -240,6 +263,17 @@ eval(struct ast *a)
             break;
         case OP_POW:
             value = pow(eval(a->left), eval(a->right));
+            break;
+
+        /* logic operators */
+        case OP_AND:
+            value = eval(a->left) && eval(a->right);
+            break;
+        case OP_OR:
+            value = eval(a->left) || eval(a->right);
+            break;
+        case OP_NOT:
+            value = !eval(a->left);
             break;
 
         /* list of statements */

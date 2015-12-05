@@ -17,10 +17,10 @@ fixtures: dist
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-02.n
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-03.n
 
-${BUILD_DIR}main.tab.c: src/main.y
+${BUILD_DIR}main.tab.c: src/parser.y
 	bison -d $< -o $@
 
-${BUILD_DIR}main.lex.c: src/main.l
+${BUILD_DIR}main.lex.c: src/lexer.l
 	flex -o $@ $<
 
 build: init compile

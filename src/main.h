@@ -86,6 +86,12 @@ struct num_val {
     double number;
 };
 
+struct bool_val {
+    /* type B */
+    int node_type;
+    int boolean;
+};
+
 struct sym_asign {
     /* type = */
     int node_type;
@@ -143,6 +149,13 @@ struct ast *new_asign(struct symbol *_symbol, struct ast *value);
  * @return
  */
 struct ast *new_number(double value);
+
+/**
+ * Create a new variable type boolean
+ * @param  value [description]
+ * @return       [description]
+ */
+struct ast *new_boolean(int value);
 
 /**
  * Evaluate an AST

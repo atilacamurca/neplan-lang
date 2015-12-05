@@ -44,6 +44,31 @@ EXP     ([Ee][-+]?[0-9]+)
     return POW;
 }
 
+"true"  {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Type found: true");
+    yylval.bool = 1; return BOOL;
+}
+
+"false" {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Type found: false");
+    yylval.bool = 0; return BOOL;
+}
+
+"and"   {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: and");
+    return AND;
+}
+
+"or"    {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: or");
+    return OR;
+}
+
+"not"   {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: not");
+    return NOT;
+}
+
  /* Built-in Functions */
 "print"         {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: print");
