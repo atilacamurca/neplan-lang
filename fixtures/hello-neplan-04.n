@@ -1,0 +1,4 @@
+# testing dynamic assignments
+a = getnum(`Digite um número: `)
+
+print(a)

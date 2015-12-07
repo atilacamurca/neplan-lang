@@ -53,6 +53,14 @@ void free_symlist(struct symlist *_symlist);
 struct ast *new_multiple_assign(struct symlist *_symlist, struct ast *explist);
 
 /**
+ * Handle a dynamic assignment of a number
+ * @param  _symbol
+ * @param  message
+ * @return
+ */
+struct ast *new_dynamic_number_assign(struct symbol *_symbol, char *message);
+
+/**
  * Enum of Built-in Functions
  */
 enum bifs {
@@ -141,7 +149,7 @@ struct ast *new_ref(struct symbol *_symbol);
  * @param  value
  * @return
  */
-struct ast *new_asign(struct symbol *_symbol, struct ast *value);
+struct ast *new_assign(struct symbol *_symbol, struct ast *value);
 
 /**
  * Create a new variable type number

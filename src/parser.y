@@ -5,6 +5,7 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include "main.h"
     #include "opcodes.h"
 %}
@@ -16,13 +17,15 @@
     struct symbol *_symbol; /* which symbol */
     struct symlist *_symlist;
     int fn; /* which function */
+    char *string;
 }
 
 /* Declare tokens */
 %token <value> NUMBER
 %token <bool> BOOL
+%token <string> STRING
 %token <_symbol> NAME
-%token <fn> FUNC
+%token <fn> FUNC FUNC_GETNUM
 %token EOL
 
 %nonassoc <fn> CMP
@@ -35,7 +38,7 @@
 %nonassoc UMINUS PNOT
 %right POW
 
-%type <tree> exp stmt explist multiple_assign
+%type <tree> exp stmt explist multiple_assign dynamic_assign_number
 %type <_symlist> symlist
 
 %start start
@@ -45,6 +48,7 @@
 stmt:
     /* TODO: latter we must have if, else, while */
     multiple_assign
+    | dynamic_assign_number
     | exp
 ;
 
@@ -58,7 +62,7 @@ exp:
     | '-' exp %prec UMINUS  { $$ = new_ast(OP_UMINUS, $2, NULL); }
     | NUMBER                { $$ = new_number($1); }
     | NAME                  { $$ = new_ref($1); }
-    | NAME '=' exp          { $$ = new_asign($1, $3); }
+    | NAME '=' exp          { $$ = new_assign($1, $3); }
     | FUNC '(' explist ')'  { $$ = new_built_in_function($1, $3); }
     | exp AND exp           { $$ = new_ast(OP_AND, $1, $3); }
     | exp OR exp            { $$ = new_ast(OP_OR, $1, $3); }
@@ -76,6 +80,10 @@ symlist: NAME               { $$ = new_symlist($1, NULL); }
 
 multiple_assign:
     symlist '=' explist     { $$ = new_multiple_assign($1, $3); }
+;
+
+dynamic_assign_number:
+    NAME '=' FUNC_GETNUM '(' STRING ')' { $$ = new_dynamic_number_assign($1, $5); }
 ;
 
 start:      /* empty */

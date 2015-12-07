@@ -12,6 +12,7 @@
 
 %{
     #include <stdio.h>
+    #include <string.h>
     #include "debug.h"
     #include "main.h"
     #include "main.tab.h"
@@ -79,6 +80,11 @@ EXP     ([Ee][-+]?[0-9]+)
     yylval.fn = B_quit; return FUNC;
 }
 
+"getnum"        {
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: getnum");
+    yylval.fn = B_get_num; return FUNC_GETNUM;
+}
+
  /* Names */
 [a-zA-Z][a-zA-Z0-9]*    {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Reference found: %c", *yytext);
@@ -90,11 +96,21 @@ EXP     ([Ee][-+]?[0-9]+)
 [0-9]+"."[0-9]*{EXP}?   |
 "."?[0-9]+{EXP}?        {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Number found: %g", atof(yytext));
-    yylval.value = atof(yytext); return NUMBER;
+    yylval.value = atof(yytext);
+    return NUMBER;
 }
 
+`[^`/\\.\n]+`           {
+    yylval.string = strdup(yytext+1);
+    yylval.string[yyleng-2] = 0;
+    if (debug_flag > 0) debug(LEVEL_DEBUG, "String found: %s", yylval.string);
+    return STRING;
+}
+
+`[^`\n]*$               { debug(LEVEL_ERROR, "Unterminated string %s", yytext); }
+
  /* Ignore comments and whitespace. */
-"#".*\n        { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
+"#".*\n         { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring comments."); }
 [ \t]           { if (debug_flag > 0) debug(LEVEL_DEBUG, "Ignoring whitespaces."); }
 
 "\n"            { return EOL; }

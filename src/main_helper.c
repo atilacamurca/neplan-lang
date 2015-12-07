@@ -133,7 +133,7 @@ new_ref(struct symbol *s)
 }
 
 struct ast *
-new_asign(struct symbol *s, struct ast *v)
+new_assign(struct symbol *s, struct ast *v)
 {
     struct sym_asign *a = malloc(sizeof(struct sym_asign));
     if (!a) {
@@ -347,6 +347,18 @@ new_multiple_assign(struct symlist *_symlist, struct ast *explist)
 
     free(current_values);
     return last_value;
+}
+
+struct ast *
+new_dynamic_number_assign(struct symbol *_symbol, char *message)
+{
+    printf("%s", message);
+
+    char buffer[256];
+    fgets(buffer, 256, stdin);
+    double value = atof(buffer);
+
+    return new_assign(_symbol, new_number(value));
 }
 
 void
