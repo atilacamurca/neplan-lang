@@ -201,6 +201,7 @@ free_tree(struct ast *a)
         /* no subtree */
         case TYPE_NUMBER:
         case TYPE_REF:
+        case TYPE_BOOL:
             break;
 
         case TYPE_ASIGN:
@@ -297,16 +298,25 @@ call_built_in_function(struct fncall *fn)
 {
     enum bifs func_type = fn->func_type;
     double value = 0.0;
-    if (fn->left) {
-        value = eval(fn->left);
-    }
 
     switch (func_type) {
         case B_print:
-            fprintf(stdout, "%4.4g\n", value);
+            if (fn->left) {
+                value = eval(fn->left);
+                switch (fn->left->node_type) {
+                    case TYPE_BOOL:
+                    case OP_AND:
+                    case OP_OR:
+                    case OP_NOT:
+                        printf("%s\n", (!!value ? "true" : "false"));
+                        break;
+                    default:
+                        printf("%4.4g\n", value);
+                }
+            }
             return value;
         case B_quit:
-            fprintf(stdout, "See ya!\n");
+            printf("See ya!\n");
             exit(EXIT_SUCCESS);
         default:
             debug(LEVEL_ERROR, "Unknown built-in function %d", func_type);
