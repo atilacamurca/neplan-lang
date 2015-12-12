@@ -73,11 +73,11 @@ EXP     ([Ee][-+]?[0-9]+)
  /* Built-in Functions */
 "print"         {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: print");
-    yylval.fn = B_print; return FUNC;
+    yylval.fn = B_print; return FUNC_PRINT;
 }
 "quit"          {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Built-in function found: quit");
-    yylval.fn = B_quit; return FUNC;
+    yylval.fn = B_quit; return FUNC_QUIT;
 }
 
 "getnum"        {
@@ -127,6 +127,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
+    extern FILE *yyin;
     if (argc > 1) {
         if (! (yyin = fopen(argv[argc - 1], "r"))) {
             perror(argv[argc - 1]);
@@ -143,7 +144,7 @@ char **argv;
     } else {
         /* welcome message */
         printf("Welcome to neplan-lang. I will be your humble REPL.\n");
-        printf("^C or quit() to Exit.\n> ");
+        printf("^C or quit() to Exit.\n" interactive_entry);
         iteractive_mode = 1;
         yyparse();
         return 0;

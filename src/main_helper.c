@@ -43,6 +43,7 @@ lookup(char *sym)
         if (!sp->name) {
             sp->name = strdup(sym);
             sp->value = 0;
+            sp->type = TYPE_NUMBER;
             return sp;
         }
 
@@ -97,7 +98,7 @@ new_boolean(int value) {
     }
 
     a->node_type = TYPE_BOOL;
-    a->boolean = value;
+    a->boolean = !!value;
     return (struct ast *) a;
 }
 
@@ -133,7 +134,7 @@ new_ref(struct symbol *s)
 }
 
 struct ast *
-new_assign(struct symbol *s, struct ast *v)
+new_assign(struct symbol *s, struct ast *v, int type)
 {
     struct sym_asign *a = malloc(sizeof(struct sym_asign));
     if (!a) {
@@ -143,6 +144,7 @@ new_assign(struct symbol *s, struct ast *v)
 
     a->node_type = TYPE_ASIGN;
     a->_symbol = s;
+    a->_symbol->type = type;
     a->value = v;
     return (struct ast *) a;
 }
@@ -298,6 +300,7 @@ call_built_in_function(struct fncall *fn)
 {
     enum bifs func_type = fn->func_type;
     double value = 0.0;
+    int type = 0;
 
     switch (func_type) {
         case B_print:
@@ -308,12 +311,24 @@ call_built_in_function(struct fncall *fn)
                     case OP_AND:
                     case OP_OR:
                     case OP_NOT:
-                        printf("%s\n", (!!value ? "true" : "false"));
+                        printf(ansi_color_magenta "%s\n" ansi_color_reset, (!!value ? "true" : "false"));
+                        break;
+                    case TYPE_REF:
+                        type = ((struct sym_ref *) fn->left)->_symbol->type;
+                        switch (type) {
+                            case TYPE_NUMBER:
+                                printf(ansi_color_magenta "%4.4g\n" ansi_color_reset, value);
+                                break;
+                            case TYPE_BOOL:
+                                printf(ansi_color_magenta "%s\n" ansi_color_reset, (!!value ? "true" : "false"));
+                                break;
+                        }
                         break;
                     default:
-                        printf("%4.4g\n", value);
+                        printf(ansi_color_magenta "%4.4g\n" ansi_color_reset, value);
                 }
             }
+            // fflush(stdout);
             return value;
         case B_quit:
             printf("See ya!\n");
@@ -331,6 +346,13 @@ new_multiple_assign(struct symlist *_symlist, struct ast *explist)
     struct symlist *cloned_args;
     double *current_values;
     struct ast *last_value;
+
+    struct symlist *sl; /* for counting arguments */
+    /* count the arguments */
+    sl = _symlist;
+    for(num_args_symbol = 0; sl; sl = sl->next) {
+        num_args_symbol++;
+    }
 
     /* store current values for latter reference, like a, b = b, a */
     current_values = (double *) malloc(num_args_symbol * sizeof(double));
@@ -352,6 +374,8 @@ new_multiple_assign(struct symlist *_symlist, struct ast *explist)
     }
 
     for (index = 0;_symlist; _symlist = _symlist->next, index++) {
+        // _symlist->_symbol->value = current_values[index];
+        _symlist->_symbol = lookup(_symlist->_symbol->name);
         _symlist->_symbol->value = current_values[index];
     }
 
@@ -368,7 +392,7 @@ new_dynamic_number_assign(struct symbol *_symbol, char *message)
     fgets(buffer, 256, stdin);
     double value = atof(buffer);
 
-    return new_assign(_symbol, new_number(value));
+    return new_assign(_symbol, new_number(value), TYPE_NUMBER);
 }
 
 void
@@ -377,7 +401,5 @@ yyerror(char *s, ...)
     va_list ap;
     va_start(ap, s);
 
-    fprintf(stderr, "%d: error: ", yylineno);
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
+    debug(LEVEL_ERROR, s, ap);
 }

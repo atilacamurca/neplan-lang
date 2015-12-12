@@ -10,6 +10,7 @@ void yyerror(char *s, ...);
 /* symbol table struct */
 struct symbol {
     char *name;     /* variable name */
+    int type;       /* variable type */
     double value;
 };
 
@@ -149,7 +150,7 @@ struct ast *new_ref(struct symbol *_symbol);
  * @param  value
  * @return
  */
-struct ast *new_assign(struct symbol *_symbol, struct ast *value);
+struct ast *new_assign(struct symbol *_symbol, struct ast *value, int type);
 
 /**
  * Create a new variable type number
@@ -185,3 +186,17 @@ void free_tree(struct ast * tree);
  * @param level
  */
 void dump_ast(struct ast *tree, int level);
+
+#define interactive_entry "#> "
+
+/* Hack for colors */
+#define ansi_color_magenta "\x1b[35m"
+#define ansi_color_reset "\x1b[0m"
+
+#define ansi_bgcolor_red "\x1b[41m"
+#define ansi_bgcolor_yellow "\x1b[43m"
+#define ansi_bgcolor_blue "\x1b[44m"
+#define ansi_bgcolor_reset "\x1b[49m"
+
+#define ansi_dim "\x1b[2m"
+#define ansi_dim_reset "\x1b[22m"
