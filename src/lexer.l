@@ -35,7 +35,9 @@ EXP     ([Ee][-+]?[0-9]+)
 "="     |
 ","     |
 "("     |
-")"     {
+")"     |
+"{"     |
+"}"     {
     if (debug_flag > 0) debug(LEVEL_DEBUG, "Operator found: %c", yytext[0]);
     return yytext[0];
 }

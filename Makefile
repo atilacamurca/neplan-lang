@@ -8,6 +8,9 @@ FIXTURES_DIR = fixtures/
 APP_NAME = neplan
 SOURCE_FILES = src/debug.h src/debug.c src/main.h src/opcodes.h src/main_helper.c
 
+run: dist
+	./build/neplan
+
 dist: clean build
 	@echo 'Making target $@ ...'
 
@@ -17,9 +20,10 @@ fixtures: dist
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-02.n
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-03.n
 	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-04.n
+	./${BUILD_DIR}${APP_NAME} -d ${FIXTURES_DIR}hello-neplan-05.n
 
 ${BUILD_DIR}main.tab.c: src/parser.y
-	bison -d $< -o $@
+	bison -v -d $< -o $@
 
 ${BUILD_DIR}main.lex.c: src/lexer.l
 	flex -o $@ $<

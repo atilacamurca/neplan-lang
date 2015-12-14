@@ -61,6 +61,10 @@ struct ast *new_multiple_assign(struct symlist *_symlist, struct ast *explist);
  */
 struct ast *new_dynamic_number_assign(struct symbol *_symbol, char *message);
 
+void handle_stmt_return(struct ast *param);
+
+void handle_output(struct ast *param, char *template_for_number, char *template_for_boolean);
+
 /**
  * Enum of Built-in Functions
  */
@@ -134,6 +138,11 @@ struct ast *new_ast(int node_type, struct ast *left, struct ast *right);
  * @return
  */
 struct ast *new_built_in_function(int func_type, struct ast *left);
+
+/**
+ * Handle call for print function
+ */
+struct ast *handle_print_call(struct ast * param);
 
 // struct ast *new_call(struct symbol *_symbol, struct ast *left);
 

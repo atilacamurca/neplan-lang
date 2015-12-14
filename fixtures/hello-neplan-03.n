@@ -1,8 +1,17 @@
 # testing multiple assignments
-a, b, c = 1, 2, 3
-
-a, b = b, a
-
-print(a)
-print(b)
-print(c)
+a, b, c = {1.5, 2, 3 * 5}
+a
+b
+c
+# swap values
+a, b = {b, a}
+a
+b
+c
+d = 1
+# assign same value to all
+e, f, g = {d + 1}
+d
+e
+f
+g

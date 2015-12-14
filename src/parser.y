@@ -25,10 +25,9 @@
 %token <bool> BOOL
 %token <string> STRING
 %token <_symbol> NAME
-%token <fn> FUNC FUNC_GETNUM FUNC_QUIT FUNC_PRINT
+%token <fn> FUNC_GETNUM FUNC_QUIT FUNC_PRINT
 %token EOL
 
-%nonassoc <fn> CMP
 %right '='
 %left OR
 %left AND
@@ -55,9 +54,7 @@ stmt:
 ;
 
 exp:
-      NAME                      { $$ = new_ref($1); }
-    | FUNC_QUIT '(' ')'         { $$ = new_built_in_function($1, NULL); }
-    | FUNC_PRINT '(' exp ')'    { $$ = new_built_in_function($1, $3); }
+    FUNC_QUIT '(' ')'         { $$ = new_built_in_function($1, NULL); }
 ;
 
 arithmetic_exp:
@@ -70,7 +67,7 @@ arithmetic_exp:
     | NAME '=' arithmetic_exp                   { $$ = new_assign($1, $3, TYPE_NUMBER); }
     | NUMBER                                    { $$ = new_number($1); }
     | '(' arithmetic_exp ')'                    { $$ = $2; }
-    | FUNC_PRINT '(' arithmetic_exp ')'         { $$ = new_built_in_function($1, $3); }
+    | FUNC_PRINT '(' arithmetic_exp ')'         { $$ = handle_print_call($3); }
     | NAME                                      { $$ = new_ref($1); }
 ;
 
@@ -81,15 +78,13 @@ boolean_exp:
     | NAME '=' boolean_exp                      { $$ = new_assign($1, $3, TYPE_BOOL); }
     | BOOL                                      { $$ = new_boolean($1); }
     | '(' boolean_exp ')'                       { $$ = $2; }
-    | FUNC_PRINT '(' boolean_exp ')'            { $$ = new_built_in_function($1, $3); }
+    | FUNC_PRINT '(' boolean_exp ')'            { $$ = handle_print_call($3); }
     | NAME                                      { $$ = new_ref($1); }
 ;
 
 explist:
       arithmetic_exp
     | arithmetic_exp ',' explist    { $$ = new_ast(TYPE_STMT_LIST, $1, $3); }
-    | boolean_exp
-    | boolean_exp ',' explist       { $$ = new_ast(TYPE_STMT_LIST, $1, $3); }
 ;
 
 symlist: NAME               { $$ = new_symlist($1, NULL); }
@@ -97,7 +92,7 @@ symlist: NAME               { $$ = new_symlist($1, NULL); }
 ;
 
 multiple_assign:
-    symlist '=' explist     { $$ = new_multiple_assign($1, $3); }
+    symlist '=' '{' explist '}'         { $$ = new_multiple_assign($1, $4); }
 ;
 
 dynamic_assign_number:
@@ -107,7 +102,8 @@ dynamic_assign_number:
 start:      /* empty */
     | start stmt EOL {
         if (iteractive_mode > 0) {
-            printf(ansi_dim "= %4.4g" ansi_dim_reset, eval($2));
+            /*eval($2);*/
+            handle_stmt_return($2);
             printf("\n" interactive_entry);
         }
         free_tree($2);

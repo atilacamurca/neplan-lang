@@ -303,33 +303,6 @@ call_built_in_function(struct fncall *fn)
     int type = 0;
 
     switch (func_type) {
-        case B_print:
-            if (fn->left) {
-                value = eval(fn->left);
-                switch (fn->left->node_type) {
-                    case TYPE_BOOL:
-                    case OP_AND:
-                    case OP_OR:
-                    case OP_NOT:
-                        printf(ansi_color_magenta "%s\n" ansi_color_reset, (!!value ? "true" : "false"));
-                        break;
-                    case TYPE_REF:
-                        type = ((struct sym_ref *) fn->left)->_symbol->type;
-                        switch (type) {
-                            case TYPE_NUMBER:
-                                printf(ansi_color_magenta "%4.4g\n" ansi_color_reset, value);
-                                break;
-                            case TYPE_BOOL:
-                                printf(ansi_color_magenta "%s\n" ansi_color_reset, (!!value ? "true" : "false"));
-                                break;
-                        }
-                        break;
-                    default:
-                        printf(ansi_color_magenta "%4.4g\n" ansi_color_reset, value);
-                }
-            }
-            // fflush(stdout);
-            return value;
         case B_quit:
             printf("See ya!\n");
             exit(EXIT_SUCCESS);
@@ -393,6 +366,51 @@ new_dynamic_number_assign(struct symbol *_symbol, char *message)
     double value = atof(buffer);
 
     return new_assign(_symbol, new_number(value), TYPE_NUMBER);
+}
+
+struct ast *
+handle_print_call(struct ast * param)
+{
+    handle_output(param, ansi_color_magenta "%.4g\n" ansi_color_reset, ansi_color_magenta "%s\n" ansi_color_reset);
+    return param;
+}
+
+void
+handle_stmt_return(struct ast *param)
+{
+    handle_output(param, ansi_dim "= %.4g" ansi_dim_reset, ansi_dim "= %s" ansi_dim_reset);
+}
+
+void
+handle_output(struct ast *param, char *template_for_number, char *template_for_boolean)
+{
+    double value = 0.0;
+    int type = 0;
+    struct symbol *s;
+    if (param) {
+        value = eval(param);
+        switch (param->node_type) {
+            case TYPE_BOOL:
+            case OP_AND:
+            case OP_OR:
+            case OP_NOT:
+                printf(template_for_boolean, (!!value ? "true" : "false"));
+                break;
+            case TYPE_REF:
+                s = lookup(((struct sym_ref *) param)->_symbol->name);
+                switch (s->type) {
+                    case TYPE_NUMBER:
+                        printf(template_for_number, s->value);
+                        break;
+                    case TYPE_BOOL:
+                        printf(template_for_boolean, (!!s->value ? "true" : "false"));
+                        break;
+                }
+                break;
+            default:
+                printf(template_for_number, value);
+        }
+    }
 }
 
 void
