@@ -24,4 +24,5 @@
 #define TYPE_REF        'N'
 #define TYPE_FUNC       'F'
 #define TYPE_STMT_LIST  'L'
-#define TYPE_ASIGN      '='
+#define TYPE_ASSIGN     '='
+#define TYPE_UNDEFINED  'U'

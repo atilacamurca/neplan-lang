@@ -1,8 +1,6 @@
 # testing boolean operations
 a = true
 print(a)
-
 b = true or false
 print(b)
-
 print(true and false)

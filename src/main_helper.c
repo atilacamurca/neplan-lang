@@ -20,7 +20,7 @@ symhash(char *sym)
     unsigned int hash = 0;
     unsigned c;
 
-    while (c = *sym++) {
+    while ((c = (*sym++))) {
         hash = hash * 9 ^ c;
     }
 
@@ -89,7 +89,8 @@ new_number(double value)
 }
 
 struct ast *
-new_boolean(int value) {
+new_boolean(int value)
+{
     struct bool_val *a = malloc(sizeof(struct bool_val));
 
     if (!a) {
@@ -142,7 +143,7 @@ new_assign(struct symbol *s, struct ast *v, int type)
         exit(EXIT_FAILURE);
     }
 
-    a->node_type = TYPE_ASIGN;
+    a->node_type = TYPE_ASSIGN;
     a->_symbol = s;
     a->_symbol->type = type;
     a->value = v;
@@ -206,7 +207,7 @@ free_tree(struct ast *a)
         case TYPE_BOOL:
             break;
 
-        case TYPE_ASIGN:
+        case TYPE_ASSIGN:
             free(((struct sym_asign *)a)->value);
             break;
         default:
@@ -221,10 +222,17 @@ free_tree(struct ast *a)
  */
 static double call_built_in_function(struct fncall *);
 
-double
+void parse_number(struct ast *a, double *p_value);
+
+void parse_boolean(struct ast *a, int *p_value);
+
+struct ast *
 eval(struct ast *a)
 {
-    double value;
+    double aux_value1, aux_value2;
+    int aux_bool1, aux_bool2;
+    struct ast *aux, *aux2;
+    struct symbol *aux_sym;
 
     if (!a) {
         debug(LEVEL_ERROR, "Internal error, null eval.");
@@ -233,75 +241,191 @@ eval(struct ast *a)
 
     switch (a->node_type) {
         case TYPE_NUMBER:
-            value = ((struct num_val *)a)->number;
-            break;
-
+            // value = ((struct num_val *)a)->number;
         case TYPE_BOOL:
-            value = (double) ((struct bool_val *)a)->boolean;
-            break;
-
+            // value = (double) ((struct bool_val *)a)->boolean;
         case TYPE_REF:
-            value = ((struct sym_ref *)a)->_symbol->value;
+            // value = ((struct sym_ref *)a)->_symbol->value;
             break;
 
-        case TYPE_ASIGN:
-            value = ((struct sym_asign *)a)->_symbol->value = eval( ((struct sym_asign *)a)->value );
+        case TYPE_ASSIGN:
+            aux = eval( ((struct sym_asign *)a)->value );
+            aux_sym = ((struct sym_asign *)a)->_symbol;
+            switch (aux->node_type) {
+                case TYPE_NUMBER:
+                    aux_sym->value = ((struct num_val *)aux)->number;
+                    aux_sym->type = TYPE_NUMBER;
+                    a = new_assign(aux_sym, aux, TYPE_NUMBER);
+                    break;
+                case TYPE_BOOL:
+                    aux_sym->value = ((struct bool_val *)aux)->boolean;
+                    aux_sym->type = TYPE_BOOL;
+                    a = new_assign(aux_sym, aux, TYPE_BOOL);
+                    break;
+                case TYPE_REF:
+                    aux_sym = ((struct sym_ref *)aux)->_symbol;
+                    a = new_assign(aux_sym, aux, aux_sym->type);
+                    break;
+            }
             break;
 
         case OP_ADD:
-            value = eval(a->left) + eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_number(aux, &aux_value1);
+            parse_number(aux2, &aux_value2);
+            if (aux_value1 && aux_value2) {
+                a = new_number(aux_value1 + aux_value2);
+            }
             break;
         case OP_SUB:
-            value = eval(a->left) - eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_number(aux, &aux_value1);
+            parse_number(aux2, &aux_value2);
+            if (aux_value1 && aux_value2) {
+                a = new_number(aux_value1 - aux_value2);
+            }
             break;
         case OP_MUL:
-            value = eval(a->left) * eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_number(aux, &aux_value1);
+            parse_number(aux2, &aux_value2);
+            if (aux_value1 && aux_value2) {
+                a = new_number(aux_value1 * aux_value2);
+            }
             break;
         case OP_DIV:
-            /* TODO: check for division by zero! */
-            value = eval(a->left) / eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_number(aux, &aux_value1);
+            parse_number(aux2, &aux_value2);
+            if (aux_value1 && aux_value2) {
+                if (aux_value2 != 0) {
+                    a = new_number(aux_value1 / aux_value2);
+                } else {
+                    debug(LEVEL_ERROR, "Division by zero.");
+                }
+            }
             break;
         case OP_UMINUS:
-            value = -eval(a->left);
+            aux = eval(a->left);
+            parse_number(aux, &aux_value1);
+            if (aux_value1) {
+                a = new_number(- aux_value1);
+            }
             break;
         case OP_POW:
-            value = pow(eval(a->left), eval(a->right));
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_number(aux, &aux_value1);
+            parse_number(aux2, &aux_value2);
+            if (aux_value1 && aux_value2) {
+                a = new_number(pow(aux_value1, aux_value2));
+            }
             break;
 
         /* logic operators */
         case OP_AND:
-            value = eval(a->left) && eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_boolean(aux, &aux_bool1);
+            parse_boolean(aux2, &aux_bool2);
+            a = new_boolean(aux_bool1 && aux_bool2);
             break;
         case OP_OR:
-            value = eval(a->left) || eval(a->right);
+            aux = eval(a->left);
+            aux2 = eval(a->right);
+            parse_boolean(aux, &aux_bool1);
+            parse_boolean(aux2, &aux_bool2);
+            a = new_boolean(aux_bool1 || aux_bool2);
             break;
         case OP_NOT:
-            value = !eval(a->left);
+            aux = eval(a->left);
+            parse_boolean(aux, &aux_bool1);
+            a = new_boolean(! aux_bool1);
             break;
 
         /* list of statements */
         case TYPE_STMT_LIST:
             eval(a->left);
-            value = eval(a->right);
+            eval(a->right);
             break;
 
         case TYPE_FUNC:
-            value = call_built_in_function((struct fncall *) a);
+            call_built_in_function((struct fncall *) a);
             break;
 
         default:
             debug(LEVEL_ERROR, "Internal error. Bad node %c.", a->node_type);
     }
-    return value;
+    return a;
+}
+
+void
+parse_number(struct ast *a, double *p_value)
+{
+    struct symbol *s;
+    switch (a->node_type) {
+        case TYPE_NUMBER:
+            *p_value = ((struct num_val *) a)->number;
+            break;
+        case TYPE_REF:
+            s = lookup(((struct sym_ref *) a)->_symbol->name);
+            switch (s->type) {
+                case TYPE_NUMBER:
+                    *p_value = s->value;
+                    break;
+                default:
+                    debug(LEVEL_ERROR, "Variable '%s' is not a number.", s->name);
+            }
+            break;
+        case OP_ADD:
+        case OP_SUB:
+        case OP_MUL:
+        case OP_DIV:
+        case OP_UMINUS:
+        case OP_POW:
+            *p_value = ((struct num_val *) a)->number;
+            break;
+        default:
+            debug(LEVEL_ERROR, "Expression is not numeric.");
+    }
+}
+
+void
+parse_boolean(struct ast *a, int *p_value)
+{
+    struct symbol *s;
+    switch (a->node_type) {
+        case TYPE_BOOL:
+            *p_value = !!((struct bool_val *)a)->boolean;
+            break;
+        case TYPE_REF:
+            s = lookup(((struct sym_ref *) a)->_symbol->name);
+            switch (s->type) {
+                case TYPE_BOOL:
+                    *p_value = !!s->value;
+                    break;
+                default:
+                    debug(LEVEL_ERROR, "Variable '%s' is not a boolean.", s->name);
+            }
+            break;
+        case OP_AND:
+        case OP_OR:
+        case OP_NOT:
+            *p_value = !!((struct bool_val *) a)->boolean;
+            break;
+        default:
+            debug(LEVEL_ERROR, "Expression is not boolean.");
+    }
 }
 
 static double
 call_built_in_function(struct fncall *fn)
 {
     enum bifs func_type = fn->func_type;
-    double value = 0.0;
-    int type = 0;
-
     switch (func_type) {
         case B_quit:
             printf("See ya!\n");
@@ -315,10 +439,12 @@ call_built_in_function(struct fncall *fn)
 struct ast *
 new_multiple_assign(struct symlist *_symlist, struct ast *explist)
 {
-    int num_args_symbol, num_args_expr, index;
+    int num_args_symbol, index;
     struct symlist *cloned_args;
-    double *current_values;
+    struct ast **current_values; /* store current values for latter reference, like a, b = b, a */
     struct ast *last_value;
+    // double aux_value;
+    // int aux_bool;
 
     struct symlist *sl; /* for counting arguments */
     /* count the arguments */
@@ -327,8 +453,7 @@ new_multiple_assign(struct symlist *_symlist, struct ast *explist)
         num_args_symbol++;
     }
 
-    /* store current values for latter reference, like a, b = b, a */
-    current_values = (double *) malloc(num_args_symbol * sizeof(double));
+    current_values = malloc(num_args_symbol * sizeof(struct ast));
 
     /* evaluate the arguments */
     cloned_args = _symlist;
@@ -340,19 +465,58 @@ new_multiple_assign(struct symlist *_symlist, struct ast *explist)
             // if it's the end of the list
             // continue to give the last value if
             // the number of symbols is less than the number of args
-            current_values[index] = eval(explist);
-            last_value = explist;
+            last_value = current_values[index] = eval(explist);
         }
         cloned_args = cloned_args->next;
     }
 
-    for (index = 0;_symlist; _symlist = _symlist->next, index++) {
+    for (index = 0; _symlist; _symlist = _symlist->next, index++) {
+        // 1st tentative, works great if the language has only one type
+        // _symlist->_symbol = lookup(_symlist->_symbol->name);
         // _symlist->_symbol->value = current_values[index];
-        _symlist->_symbol = lookup(_symlist->_symbol->name);
-        _symlist->_symbol->value = current_values[index];
-    }
 
-    free(current_values);
+        // 2nd tentative, overrides the symbol values
+        // _symlist->_symbol = lookup(_symlist->_symbol->name);
+        // switch (_symlist->_symbol->type) {
+        //     case TYPE_NUMBER:
+        //         parse_number(current_values[index], &aux_value);
+        //         if (aux_value) {
+        //             _symlist->_symbol->value = aux_value;
+        //         }
+        //         break;
+        //     case TYPE_BOOL:
+        //         parse_boolean(current_values[index], &aux_bool);
+        //         _symlist->_symbol->value = aux_bool;
+        //         break;
+        //     default:
+        //         debug(LEVEL_ERROR, "Error while parsing, type not permited.");
+        //}
+
+        // 3th tentative
+        switch (current_values[index]->node_type) {
+            case TYPE_BOOL:
+            case OP_AND:
+            case OP_OR:
+            case OP_NOT:
+                _symlist->_symbol->value = ((struct bool_val *) current_values[index])->boolean;
+                _symlist->_symbol->type = TYPE_BOOL;
+                break;
+            case TYPE_NUMBER:
+            case OP_ADD:
+            case OP_SUB:
+            case OP_MUL:
+            case OP_DIV:
+            case OP_UMINUS:
+            case OP_POW:
+                _symlist->_symbol->value = ((struct num_val *) current_values[index])->number;
+                _symlist->_symbol->type = TYPE_NUMBER;
+                break;
+            case TYPE_REF:
+                _symlist->_symbol->value = ((struct sym_ref *) current_values[index])->_symbol->value;
+                break;
+
+        }
+    }
     return last_value;
 }
 
@@ -384,20 +548,19 @@ handle_stmt_return(struct ast *param)
 void
 handle_output(struct ast *param, char *template_for_number, char *template_for_boolean)
 {
-    double value = 0.0;
-    int type = 0;
+    struct ast *value;
     struct symbol *s;
     if (param) {
         value = eval(param);
-        switch (param->node_type) {
+        switch (value->node_type) {
             case TYPE_BOOL:
             case OP_AND:
             case OP_OR:
             case OP_NOT:
-                printf(template_for_boolean, (!!value ? "true" : "false"));
+                printf(template_for_boolean, (!!((struct bool_val *) value)->boolean ? "true" : "false"));
                 break;
             case TYPE_REF:
-                s = lookup(((struct sym_ref *) param)->_symbol->name);
+                s = lookup(((struct sym_ref *) value)->_symbol->name);
                 switch (s->type) {
                     case TYPE_NUMBER:
                         printf(template_for_number, s->value);
@@ -407,8 +570,15 @@ handle_output(struct ast *param, char *template_for_number, char *template_for_b
                         break;
                 }
                 break;
-            default:
-                printf(template_for_number, value);
+            case TYPE_NUMBER:
+            case OP_ADD:
+            case OP_SUB:
+            case OP_MUL:
+            case OP_DIV:
+            case OP_UMINUS:
+            case OP_POW:
+                printf(template_for_number, ((struct num_val *) value)->number);
+                break;
         }
     }
 }

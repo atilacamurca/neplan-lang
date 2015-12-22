@@ -177,11 +177,10 @@ struct ast *new_boolean(int value);
 
 /**
  * Evaluate an AST
- * TODO: return something else instead double.
  * @param  tree
  * @return
  */
-double eval(struct ast * tree);
+struct ast *eval(struct ast * tree);
 
 /**
  * Release me from my spell, let me go!
